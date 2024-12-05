@@ -99,3 +99,76 @@ leaflet(place_visits) %>%
     popup = ~place_name,
     stroke = FALSE, fillOpacity = 0.5
   )
+
+#covid info
+activity_segments <- activity_segments %>%
+  mutate(date = as.Date(start_timestamp))
+
+#split by time for comparisons
+activity_segments <- activity_segments %>%
+  mutate(
+    period = case_when(
+      date < as.Date("2020-03-01") ~ "Pre-Pandemic",
+      date >= as.Date("2020-03-01") ~ "Pandemic"
+    )
+  )
+
+activity_count <- activity_segments %>%
+  group_by(period, date) %>%
+  summarize(count = n(), .groups = 'drop')
+
+# activity frequency comparison
+
+ggplot(activity_count, aes(x = date, y = count, color = period)) +
+  geom_line() +
+  labs(title = "Activity Frequency Before and During Pandemic",
+       x = "Date", y = "Number of Activities") +
+  theme_minimal()
+
+#travel mode usage comparison
+
+distance_analysis <- activity_segments %>%
+  group_by(period) %>%
+  summarize(
+    avg_distance = mean(distance_meters, na.rm = TRUE),
+    median_distance = median(distance_meters, na.rm = TRUE),
+    .groups = 'drop'
+  )
+
+#filter data to make more accurate bar graph
+travel_mode_analysis <- activity_segments %>%
+  filter(!is.na(travel_mode)) %>%
+  group_by(period, travel_mode) %>%
+  summarize(count = n(), .groups = 'drop') %>%
+  filter(count > 5)  # Remove travel modes with count of 5
+
+ggplot(travel_mode_analysis, aes(x = travel_mode, y = count, fill = period)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Travel Mode Usage Before & During Pandemic",
+       x = "Travel Mode", y = "Count") +
+  theme_minimal()
+
+#activity density comparison (heatmap)
+
+activity_segments <- activity_segments %>%
+  mutate(
+    day_of_week = wday(date, label = TRUE),
+    hour = hour(as.POSIXct(start_timestamp))
+  )
+
+heatmap_data <- activity_segments %>%
+  group_by(period, day_of_week, hour) %>%
+  summarize(activity_count = n(), .groups = 'drop')
+
+ggplot(heatmap_data, aes(x = hour, y = day_of_week, fill = activity_count)) +
+  geom_tile() +
+  facet_wrap(~ period) +
+  scale_fill_gradient(low = "lightblue", high = "darkblue") +
+  labs(
+    title = "Activity Density by Day and Hour",
+    x = "Hour of Day", y = "Day of Week", fill = "Activity Count"
+  ) +
+  theme_minimal()
+
+
+
