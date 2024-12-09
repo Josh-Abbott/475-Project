@@ -1,0 +1,4 @@
+location_data.db
+data/
+__pycache__/
+weekly_schedule_heatmap/_pycache_/

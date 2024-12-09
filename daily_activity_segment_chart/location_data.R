@@ -4,7 +4,7 @@ library(lubridate)
 library(ggplot2)
 
 #change to location of sql database file
-db_path <- "C:\\Users\\Documents\\Repos\\475 project\\location_data.db"
+db_path <- "C:\\Users\\ees10\\OneDrive\\Documents\\Repos\\475-Project\\location_data.db"
 
 con <- dbConnect(RSQLite::SQLite(), db_path)
 activity_segments <- dbGetQuery(con, "SELECT * FROM activity_segments")
