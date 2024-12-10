@@ -32,6 +32,10 @@ place_visits <- place_visits %>%
     duration = as.numeric(difftime(end_timestamp, start_timestamp, units = "mins"))
   )
 
+# convert timestamps to date objects
+activity_segments <- activity_segments %>%
+  mutate(date = as.Date(start_timestamp))
+
 #missing lat data
 activity_segments <- activity_segments %>%
   filter(!is.na(start_latitude) & !is.na(start_longitude))
@@ -49,63 +53,7 @@ summary(place_visits$duration)
 
 table(activity_segments$travel_mode)
 
-#table(activity_segments$confidence)
-#table(place_visits$visit_confidence)
-
 length(unique(place_visits$place_name))
-
-#travel mode bar chart (TODO: handle NA  travel_mode)
-ggplot(activity_segments, aes(x = travel_mode)) +
-  geom_bar(fill = "blue") +
-  labs(title = "Frequency of Travel Modes", x = "Travel Mode", y = "Count")
-
-#activities per day
-daily_activities <- activity_segments %>%
-  mutate(date = as.Date(start_timestamp)) %>%
-  group_by(date) %>%
-  summarize(count = n())
-
-#activities per day plot
-ggplot(daily_activities, aes(x = date, y = count)) +
-  geom_line(color = "blue") +
-  labs(title = "Daily Activity Segments", x = "Date", y = "Number of Activities")
-
-
-library(leaflet)
-
-#map of places visited
-leaflet(place_visits) %>%
-  addTiles() %>%
-  addCircleMarkers(
-    lng = ~longitude, lat = ~latitude,
-    radius = 5,
-    popup = ~place_name,
-    color = "red",
-    stroke = FALSE, fillOpacity = 0.5
-  ) %>%
-  addLegend("bottomright", colors = "red", labels = "Place Visits")
-
-
-set.seed(123)
-coordinates <- place_visits %>%
-  select(longitude, latitude)
-
-clusters <- kmeans(coordinates, centers = 5)
-place_visits$cluster <- as.factor(clusters$cluster)
-
-#map cluster?
-leaflet(place_visits) %>%
-  addTiles() %>%
-  addCircleMarkers(
-    lng = ~longitude, lat = ~latitude,
-    color = ~cluster,
-    popup = ~place_name,
-    stroke = FALSE, fillOpacity = 0.5
-  )
-
-#covid info
-activity_segments <- activity_segments %>%
-  mutate(date = as.Date(start_timestamp))
 
 #split by time for comparisons
 activity_segments <- activity_segments %>%
@@ -139,6 +87,7 @@ distance_analysis <- activity_segments %>%
   )
 
 #filter data to make more accurate bar graph
+
 travel_mode_analysis <- activity_segments %>%
   filter(!is.na(travel_mode)) %>%
   group_by(period, travel_mode) %>%
@@ -172,3 +121,4 @@ ggplot(heatmap_data, aes(x = hour, y = day_of_week, fill = activity_count)) +
     x = "Hour of Day", y = "Day of Week", fill = "Activity Count"
   ) +
   theme_minimal()
+
