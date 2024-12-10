@@ -121,7 +121,7 @@ def process_file(file_path, confidence_threshold):
         elif 'placeVisit' in entry:
             insert_place_visit(entry['placeVisit'], confidence_threshold)
 
-def process_zip(zip_path, extract_to='temp_extracted', confidence_threshold=50):
+def process_zip(zip_path, extract_to='data', confidence_threshold=50):
     if not os.path.exists(extract_to):
         os.makedirs(extract_to)
 
@@ -137,16 +137,16 @@ def process_zip(zip_path, extract_to='temp_extracted', confidence_threshold=50):
                     file_path = os.path.join(root, file)
                     print(f"Processing {file_path}")
                     process_file(file_path, confidence_threshold)
-
-    # Clean up the extracted files
-    for root, dirs, files in os.walk(extract_to, topdown=False):
-        for file in files:
-            os.remove(os.path.join(root, file))
-        for dir in dirs:
-            os.rmdir(os.path.join(root, dir))
-
-    shutil.rmtree(extract_to)
-
+                    
+                    # Move extracted json files
+                    new_file_path = os.path.join('data', os.path.basename(file_path))
+                    shutil.move(file_path, new_file_path)
+                    print(f"Moved {file_path} to {new_file_path}")
+   
+    for folder_name in ['__MACOSX', 'Takeout']:
+        folder_path = os.path.join(extract_to, folder_name)
+        if os.path.exists(folder_path):
+            shutil.rmtree(folder_path)
 #gets all json files from folder named data
 folder_path = 'data'
 confidence_threshold = 50 # Confidence threshold for filtering out low confidence entries
